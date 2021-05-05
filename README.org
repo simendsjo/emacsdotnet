@@ -1,0 +1,153 @@
+#+TITLE: EmacsDotNet
+
+* EmacsDotNet - Leverage the dotnet ecosystem from emacs
+Call dotnet code from emacs.
+
+NOTE: This is far from production quality, but it's useful for me, and maybe
+it's useful for someone else as well. Use at your own risk.
+
+#+begin_src fsharp
+[<ExposeToEmacsAsTopLevelKebabCase>]
+let helloFromFsharp (name : string) = $"F# greets %s{name}!"
+#+end_src
+
+#+begin_src csharp
+public static class Greeter {
+    [ExposeToEmacsAsTopLevelKebabCase]
+    public static string HelloFromCsharp(string name) {
+        return $"C# greets {name}!"
+    }
+}
+#+end_src
+
+#+begin_src emacs-lisp
+(dotnet hello-from-fsharp "Jane Doe") ;; "F# greets Jane Doe"
+(dotnet hello-from-csharp "John Doe") ;; "C# greets John Doe"
+#+end_src
+
+** Features
+- Basic types supported; int, float, bool, string
+- Automatic conversions between types
+- Lists of basic types
+- Hetrogenous lists
+** Installation
+The project is only available from source, but should build out-of-the-box.
+These instructions assume you're installing to =~/emacsdotnet=.
+
+Clone the repository
+#+begin_src sh
+git clone git@github.com:simendsjo/emacsdotnet.git ~/emacsdotnet
+#+end_src
+
+Start the server
+#+begin_src sh
+dotnet run -p ~/emacsdotnet/emacsdotnet
+#+end_src
+
+You should see something like
+#+begin_example
+Starting repl server at 0.0.0.0:5000 with 1 exposed functions
+Press C-c to abort
+#+end_example
+
+Add to your emacs configuration:
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/emacsdotnet")
+(require 'emacsdotnet)
+#+end_src
+
+You can test it by using the build-in echo function
+#+begin_src emacs-lisp
+(dotnet echo-sexpr 42) ;; evaluates to 42
+#+end_src
+** Adding functions
+The easiest way to test it is to use the CLI server to load functions from
+assemblies.
+
+The other way is to embed the core library and exposing it yourself.  It's (too)
+easy to embed the server in an existing application and exposing everything, but
+remember that there are no security measures in place if you go this route.
+
+=emacsdotnet.exe --expose-assembly MyAssembly.dll true= will expose all
+~ExposeToEmacs~ functions from =MyAssembly.dll=, and is a good way to test.
+
+If you want to embed, take a look at the =emacsdotnet= project.
+
+#+begin_example
+USAGE: emacsdotnet.exe [--help] [--host <host>] [--port <port>] [--expose-assembly <fullpath> <justExposed>]
+
+OPTIONS:
+
+    --host <host>         Listen on host. Defaults to 0.0.0.0
+    --port <port>         Listen on port. Defaults to 5000
+    --expose-assembly <fullpath> <justExposed>
+                          Load functions from assembly. Full path to the dll, and true/false indicated if only functions tagged ExposeToEmacs should be visible
+    --help                display this list of options.
+#+end_example
+** Motivation
+I'm not good at emacs, nor lisp, but I love using org-mode and customizing it.
+Certain things that is trivial for me in dotnet, is impossible for me in
+emacs-lisp. Being able to "extend" emacs by leveraging my existing dotnet skills
+and dotnet libraries is good for my productivity.
+** How it works
+Reflection will look for functions (static methods) to expose. When a function
+is called, it's called with a list of S-Expressions instead of Object arrays
+We're converting a MethodInfo to a function ~SExpr list -> SExpr~ much like this
+simplified version:
+#+begin_src fsharp
+let methodToLispFunction (m : MethodInfo) : (SExpr list -> SExpr) =
+    fun (eParams : SExpr list) ->
+        let iParams =
+            eParams
+            |> Seq.map sexprToValue
+            |> Array.ofSeq
+        let res = m.Invoke(null, iParams)
+        valueToSexpr res
+#+end_src
+
+These functions are added in a map by their fully qualified name.
+
+The dotnet console application listens for TCP connections, when it gets a
+connection, it starts a repl server for the connection. The repl server
+basically does
+- Read string from socket
+- Parse string to an S-Expression
+- If it's a function-call (a list which starts with a symbol)
+  - call function, use return as result
+- If not, just use parsed expression as result
+- Print S-Expression to string
+- Write string to socket
+
+When emacs calls dotnet, it acs as a client which does much of the same
+- If not connected to server, connect
+- Print S-Expression to string (calling ~prin1-to-string~)
+- Send to dotnet, wait for result
+- Parse string to an S-Expression (calling ~read~)
+** Some design notes
+*** License by using the CLI
+If you supply your own attributes (I check by name, not type), you should be
+able to use the CLI to load your assembly and start the repl-server without
+being bound by any license of this project (AFAIK, but IANAL. At least that has
+been my intention, and it's a permissive licence anyway).
+*** Embedding vs CLI
+It's possible to embed this rather than using the console application, and that
+might be a better choice to expose functionality. The =emacsdotnet= application
+makes it simple to expose dlls, and at the same time you shouldn't have to worry
+about licensing as you don't use any of the code.
+*** Socket vs stdin/stdout
+Why use a socket instead of just stdin/stdout? I want to extend this to have
+multiple servers at the same time, maybe crossing various boundaries. My day job
+involves using Windows, but I run Emacs in WSL as I'm having a lots of
+performance problems and some show-stoppers with Emacs on Windows. By using a
+TCP socket, I can have a server running on the Windows side, and one on the WSL
+side.
+*** Socket vs HTTP vs WebSocket
+This is mostly just because a socket was simple and light-weight.
+*** Security
+Secu..what? There's not any security here. Everything the server exposes will
+become available to everyone. There's no authentication nor authorization. Use
+the ~ExposeToEmacs~ attributes and only expose functions with that attribute.
+
+Only expose what's useful for emacs. You can easily expose core system
+libraries, and then ~(dotnet System/Exit 1)~ will exit the server! And that's
+just a haha funny thing that can happen.

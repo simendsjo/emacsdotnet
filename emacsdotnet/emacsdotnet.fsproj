@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>0.1.0-alpha1</Version>
+        <OutputType>Exe</OutputType>
+        <!-- TargetName is buggy. Only certain produced files will
+        have the correct name, while others are using the project name
+        <TargetName>emacsdotnet</TargetName>
+        
+        So that's why we've named the project as the exe file
+        -->
+        <TargetFramework>net5.0</TargetFramework>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+        <PublishTrimmed>true</PublishTrimmed>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <RootNamespace>Simendsjo.EmacsDotNet.Console</RootNamespace>       
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Argu" Version="6.1.1" />
+      <PackageReference Include="FParsec" Version="1.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Simendsjo.EmacsDotNet\Simendsjo.EmacsDotNet.fsproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Simendsjo.EmacsDotNet.Tests", "Simendsjo.EmacsDotNet.Tests\Simendsjo.EmacsDotNet.Tests.fsproj", "{2FFAFDA2-77D9-4DBD-B374-964620030B8C}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Simendsjo.EmacsDotNet", "Simendsjo.EmacsDotNet\Simendsjo.EmacsDotNet.fsproj", "{3C244E1C-AA2A-40C0-A72E-BAA0221CF8E9}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "emacsdotnet", "emacsdotnet\emacsdotnet.fsproj", "{02DB6475-62F5-41A3-8B04-F38AB1F2E8A4}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Simendsjo.EmacsDotNet.ExposedLibraryExample", "Simendsjo.EmacsDotNet.ExposedLibraryExample\Simendsjo.EmacsDotNet.ExposedLibraryExample.fsproj", "{D9ADA2E9-F360-4C92-8D89-AAD945935A7C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{DE9672A6-F5A8-42D9-AD1B-6B33B5733490}"
+ProjectSection(SolutionItems) = preProject
+	README.org = README.org
+	emacsdotnet.el = emacsdotnet.el
+EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2FFAFDA2-77D9-4DBD-B374-964620030B8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FFAFDA2-77D9-4DBD-B374-964620030B8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FFAFDA2-77D9-4DBD-B374-964620030B8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FFAFDA2-77D9-4DBD-B374-964620030B8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C244E1C-AA2A-40C0-A72E-BAA0221CF8E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C244E1C-AA2A-40C0-A72E-BAA0221CF8E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C244E1C-AA2A-40C0-A72E-BAA0221CF8E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C244E1C-AA2A-40C0-A72E-BAA0221CF8E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02DB6475-62F5-41A3-8B04-F38AB1F2E8A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02DB6475-62F5-41A3-8B04-F38AB1F2E8A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02DB6475-62F5-41A3-8B04-F38AB1F2E8A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02DB6475-62F5-41A3-8B04-F38AB1F2E8A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9ADA2E9-F360-4C92-8D89-AAD945935A7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9ADA2E9-F360-4C92-8D89-AAD945935A7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9ADA2E9-F360-4C92-8D89-AAD945935A7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9ADA2E9-F360-4C92-8D89-AAD945935A7C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
