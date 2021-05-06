@@ -64,6 +64,10 @@ let evalTests =
 let fsharpToSExprTests =
   testList "fsharp to SExpr conversions" [
     testCase "simple values" <| fun _ ->
+      Expect.equal (fsharpToSExpr (SExpr.Nil)) (SExpr.Nil) "SExpr"
+      Expect.equal (fsharpToSExpr ('c' :> obj)) (SExpr.Character 'c') (nameof char)
+      Expect.equal (fsharpToSExpr ("string" :> obj)) (SExpr.String "string") (nameof string)
+
       Expect.equal (fsharpToSExpr ((int8 1) :> obj)) (SExpr.Integer 1) (nameof int8)
       Expect.equal (fsharpToSExpr ((int16 1) :> obj)) (SExpr.Integer 1) (nameof int16)
       Expect.equal (fsharpToSExpr ((int32 1) :> obj)) (SExpr.Integer 1) (nameof int32)
