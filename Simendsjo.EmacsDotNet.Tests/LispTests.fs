@@ -47,7 +47,7 @@ let evalTests =
   let evalSingle str = Eval.evalOrFail Env.Env.Empty str |> List.exactlyOne
   testList "eval tests" [
     testCase "eval atoms returns atoms" <| fun _ ->
-      Expect.equal (SExpr.Integer 42) (evalSingle "42") "Integer"
-      Expect.equal (SExpr.Float 42.42) (evalSingle "42.42") "Float"
-      Expect.equal (SExpr.String "Hello") (evalSingle "\"Hello\"") "String"
+      Expect.equal (evalSingle "42") (SExpr.Integer 42) "Integer"
+      Expect.equal (evalSingle "42.42") (SExpr.Float 42.42) "Float"
+      Expect.equal (evalSingle "\"Hello\"") (SExpr.String "Hello") "String"
   ]
