@@ -325,7 +325,7 @@ module Env =
             // in case someone doesn't want to include our library
             // because of licensing issues.
             //    a.AttributeType.IsAssignableTo(typeof<ExposeToEmacs>)
-            a.AttributeType.Name.StartsWith("ExposeToEmacs")
+            a.AttributeType.Name.StartsWith(nameof(ExposeToEmacs))
             )
         |> Option.map (fun _ -> m)
         
@@ -346,7 +346,7 @@ module Env =
             |> Seq.tryFind (fun a ->
                 // NOTE: Use string rather than type in case users want
                 // to supply their own type to avoid licensing issues
-                a.AttributeType.Name = "ExposeToEmacsAsTopLevelKebabCase"
+                a.AttributeType.Name = nameof(ExposeToEmacsAsTopLevelKebabCase)
                 //a.AttributeType = typeof<ExposeToEmacsAsTopLevelKebabCase>
                 )
             |> Option.map (fun _ -> toKebabCase m.Name)
