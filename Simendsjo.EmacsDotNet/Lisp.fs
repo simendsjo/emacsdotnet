@@ -366,6 +366,8 @@ module Eval =
             Map.tryFind f env.functions
             |> Option.map (fun fn -> Result.Ok (fn null xs))
             |> Option.defaultWith (fun () -> Result.Error $"function %s{f} not in environment")
+        | SExpr.List [] ->
+            Result.Ok SExpr.Nil
         | _ ->
             Result.Ok expr
             
