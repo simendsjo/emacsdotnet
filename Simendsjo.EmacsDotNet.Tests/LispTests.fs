@@ -72,4 +72,9 @@ let fsharpToSExprTests =
       Expect.equal (fsharpToSExpr ((uint16 1) :> obj)) (SExpr.Integer 1) (nameof uint16)
       Expect.equal (fsharpToSExpr ((uint32 1) :> obj)) (SExpr.Integer 1) (nameof uint32)
       Expect.equal (fsharpToSExpr ((uint64 1) :> obj)) (SExpr.Integer 1) (nameof uint64)
+
+      Expect.equal (fsharpToSExpr ((float 1.0) :> obj)) (SExpr.Float 1.0) (nameof float)
+      Expect.equal (fsharpToSExpr ((double 1.0) :> obj)) (SExpr.Float 1.0) (nameof double) // same thing as float, but added for completeness
+      Expect.equal (fsharpToSExpr ((float32 1.0) :> obj)) (SExpr.Float 1.0) (nameof float32)
+      Expect.equal (fsharpToSExpr ((decimal 1.0) :> obj)) (SExpr.Float 1.0) (nameof decimal)
   ]
