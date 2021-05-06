@@ -52,4 +52,6 @@ let evalTests =
       Expect.equal (evalSingle "\"Hello\"") (SExpr.String "Hello") "String"
     testCase "eval empty list returns nil" <| fun _ ->
       Expect.equal (evalSingle "()") SExpr.Nil "Empty list should evaluate to nil"
+    testCase "eval symbol t returns symbol" <| fun _ ->
+      Expect.equal (evalSingle "t") (SExpr.Symbol "t") "True is t"
   ]
