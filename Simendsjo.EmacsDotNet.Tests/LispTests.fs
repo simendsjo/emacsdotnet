@@ -49,6 +49,7 @@ let evalTests =
     testCase "eval atoms returns atoms" <| fun _ ->
       Expect.equal (evalSingle "42") (SExpr.Integer 42) "Integer"
       Expect.equal (evalSingle "42.42") (SExpr.Float 42.42) "Float"
+      Expect.equal (evalSingle "?A") (SExpr.Character 'A') "Character"
       Expect.equal (evalSingle "\"Hello\"") (SExpr.String "Hello") "String"
     testCase "eval empty list returns nil" <| fun _ ->
       Expect.equal (evalSingle "()") SExpr.Nil "Empty list should evaluate to nil"

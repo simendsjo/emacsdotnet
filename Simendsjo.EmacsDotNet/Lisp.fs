@@ -140,6 +140,11 @@ module Parser =
                 else Float (float nl.String)
         .>> spaces
         
+    let parseCharacter =
+        skipChar '?' >>. anyChar
+        |>> Character
+        .>> spaces
+
     let parseString =
         // TODO: Support escape. Ending should be (<> \" && ")
         between (pchar '"') (pchar '"') (manySatisfy ((<>) '"'))
@@ -149,6 +154,7 @@ module Parser =
     let parseAtom =
         choice [
             parseNumber
+            parseCharacter
             parseString
             parseNil
             parseSymbol
