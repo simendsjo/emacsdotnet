@@ -29,10 +29,11 @@ let parseReadTests =
       "nil"
       "42"
       "4.2"
+      "?A"
       "hei"
       "\"hei\""
       "()"
-      "(f x :some-thing 42 :else 4.2 :otherthing \"hei hei\" () nil)"
+      "(f x :some-thing 42 :else 4.2 :otherthing ?C \"hei hei\" () nil)"
     ]
     |> List.map (fun orig ->
       testCase orig <| fun _ ->
