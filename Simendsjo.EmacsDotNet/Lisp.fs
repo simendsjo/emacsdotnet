@@ -243,17 +243,18 @@ module Lispify =
         | :? string as x -> SExpr.String x
         | :? int8 as x -> SExpr.Integer (int x)
         | :? int16 as x -> SExpr.Integer (int x)
-        | :? int32 as x -> SExpr.Integer x
+        | :? int32 as x -> SExpr.Integer (int x)
         | :? int64 as x -> SExpr.Integer (int x)
         | :? float as x -> SExpr.Float x
+        | :? float as x -> SExpr.Float (float x)
         | :? float32 as x -> SExpr.Float (float x)
         | :? decimal as x -> SExpr.Float (float x)
         | :? List<string> as xs -> xs |> List.map SExpr.String |> SExpr.List
         | :? List<int8> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<int16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<int32> as xs -> xs |> List.map SExpr.Integer |> SExpr.List
+        | :? List<int32> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<int64> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<float> as xs -> xs |> List.map SExpr.Float |> SExpr.List
+        | :? List<float> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<float32> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<decimal> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<obj> as xs -> xs |> List.map fromFSharp |> SExpr.List
