@@ -59,3 +59,17 @@ let evalTests =
     testCase "eval keyword returns keyword" <| fun _ ->
       Expect.equal (evalSingle ":anything") (SExpr.Symbol ":anything") "Keywords are self-evaluating"
   ]
+
+[<Tests>]
+let fsharpToSExprTests =
+  testList "fsharp to SExpr conversions" [
+    testCase "simple values" <| fun _ ->
+      Expect.equal (fsharpToSExpr ((int8 1) :> obj)) (SExpr.Integer 1) (nameof int8)
+      Expect.equal (fsharpToSExpr ((int16 1) :> obj)) (SExpr.Integer 1) (nameof int16)
+      Expect.equal (fsharpToSExpr ((int32 1) :> obj)) (SExpr.Integer 1) (nameof int32)
+      Expect.equal (fsharpToSExpr ((int64 1) :> obj)) (SExpr.Integer 1) (nameof int64)
+      Expect.equal (fsharpToSExpr ((uint8 1) :> obj)) (SExpr.Integer 1) (nameof uint8)
+      Expect.equal (fsharpToSExpr ((uint16 1) :> obj)) (SExpr.Integer 1) (nameof uint16)
+      Expect.equal (fsharpToSExpr ((uint32 1) :> obj)) (SExpr.Integer 1) (nameof uint32)
+      Expect.equal (fsharpToSExpr ((uint64 1) :> obj)) (SExpr.Integer 1) (nameof uint64)
+  ]

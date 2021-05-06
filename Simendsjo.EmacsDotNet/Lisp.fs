@@ -245,7 +245,10 @@ module Lispify =
         | :? int16 as x -> SExpr.Integer (int x)
         | :? int32 as x -> SExpr.Integer (int x)
         | :? int64 as x -> SExpr.Integer (int x)
-        | :? float as x -> SExpr.Float x
+        | :? uint8 as x -> SExpr.Integer (int x)
+        | :? uint16 as x -> SExpr.Integer (int x)
+        | :? uint32 as x -> SExpr.Integer (int x)
+        | :? uint64 as x -> SExpr.Integer (int x)
         | :? float as x -> SExpr.Float (float x)
         | :? float32 as x -> SExpr.Float (float x)
         | :? decimal as x -> SExpr.Float (float x)
@@ -254,6 +257,10 @@ module Lispify =
         | :? List<int16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<int32> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<int64> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
+        | :? List<uint8> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
+        | :? List<uint16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
+        | :? List<uint32> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
+        | :? List<uint64> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<float> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<float32> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<decimal> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
