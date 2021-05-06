@@ -82,3 +82,17 @@ let fsharpToSExprTests =
       Expect.equal (fsharpToSExpr ((float32 1.0) :> obj)) (SExpr.Float 1.0) (nameof float32)
       Expect.equal (fsharpToSExpr ((decimal 1.0) :> obj)) (SExpr.Float 1.0) (nameof decimal)
   ]
+
+[<Tests>]
+let sexprToFSharpValues =
+  testList "SExpr conversions to dotnet values" [
+    testCase "simple values" <| fun _ ->
+      Expect.equal (sexprToFSharp (SExpr.Nil)) (() :> obj) (nameof unit)
+      Expect.equal (sexprToFSharp (SExpr.Character 'A')) ('A' :> obj) (nameof char)
+      Expect.equal (sexprToFSharp (SExpr.String "string")) ("string" :> obj) (nameof string)
+      Expect.equal (sexprToFSharp (SExpr.Integer 1)) (1 :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.Float 1.0)) (1.0 :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.Symbol "t")) (true :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1])) ([1] :> obj) "hetrogen list"
+      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1; SExpr.Float 1.0])) ([1 :> obj; 1.0 :> obj] :> obj) "homogen list"
+  ]
