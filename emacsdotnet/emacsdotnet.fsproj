@@ -10,11 +10,6 @@
         So that's why we've named the project as the exe file
         -->
         <TargetFramework>net5.0</TargetFramework>
-        <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
-        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
-        <PublishTrimmed>true</PublishTrimmed>
-        <PublishReadyToRun>true</PublishReadyToRun>
         <RootNamespace>Simendsjo.EmacsDotNet.Console</RootNamespace>       
     </PropertyGroup>
 
