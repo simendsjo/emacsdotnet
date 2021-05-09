@@ -250,6 +250,7 @@ module Lispify =
         | :? float32 as x -> SExpr.Float (float x)
         | :? decimal as x -> SExpr.Float (float x)
         | :? List<char> as xs -> xs |> List.map SExpr.Character |> SExpr.List
+        | :? List<bool> as xs -> xs |> List.map (fun x -> if x then SExpr.Symbol "t" else SExpr.Nil) |> SExpr.List
         | :? List<string> as xs -> xs |> List.map SExpr.String |> SExpr.List
         | :? List<int8> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
         | :? List<int16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
