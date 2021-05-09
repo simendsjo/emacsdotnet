@@ -306,6 +306,17 @@ module Lispify =
             let res = invoker.Invoke(fn, iParams)
             fromFSharp res
 
+    let extractFSharpFunctionParamsAndReturn fn =
+        let rec go state (p, next) =
+            if FSharpType.IsFunction next
+            then go (p :: state) (FSharpType.GetFunctionElements next)
+            else (List.rev (p :: state), next)
+        go [] (FSharpType.GetFunctionElements (fn.GetType()))
+
+    let apply1 (fn : 'a -> 'b) (e : SExpr) : 'b =
+        let v = sexprToTypedFSharp<'a> e
+        fn v
+
 
 [<AutoOpen>]
 module Convert =
