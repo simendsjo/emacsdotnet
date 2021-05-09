@@ -268,22 +268,44 @@ module Lispify =
         | :? List<decimal> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
         | :? List<obj> as xs -> xs |> List.map fromFSharp |> SExpr.List
         | x -> failwithf $"Unable to convert FSharp value %A{x} to an SExpr"
-        
-    let lispifyMethod (m : MethodInfo) : LispifiedMethod =
-        let mParams = m.GetParameters()
-        fun (onObj : obj) (eParams : SExpr list) ->
-            // Convert to the exact type. Cannot send int for int8 parameter
+
+    let sexprToFSharp (sexpr : SExpr) (dest : Type) =
+        if dest = typeof<SExpr>
+        then sexpr :> obj
+        // Convert to the exact type. Cannot send int for int8 parameter
+        else Convert.ChangeType(Delispify.toFSharp sexpr, dest)
+
+    let sexprToTypedFSharp<'dest> (sexpr : SExpr) : 'dest =
+        sexprToFSharp sexpr (typeof<'dest>) :?> 'dest
+
+    let makeSExprToDotnetParamsConverter (mParams : Type seq) : (SExpr seq -> obj array) =
+        fun (eParams : SExpr seq) ->
             let iParams =
                 Seq.zip mParams eParams
-                |> Seq.map (fun (p, e) ->
-                    if p.ParameterType = typeof<SExpr>
-                    then e :> obj
-                    else Convert.ChangeType(Delispify.toFSharp e, p.ParameterType)
-                )
+                |> Seq.map (fun (p, e) -> sexprToFSharp e p)
                 |> Array.ofSeq
+            iParams
+
+    let lispifyMethod (m : MethodInfo) : LispifiedMethod =
+        let paramConv =
+            m.GetParameters()
+            |> Seq.map (fun p -> p.ParameterType)
+            |> makeSExprToDotnetParamsConverter
+        fun (onObj : obj) (eParams : SExpr list) ->
+            let iParams = paramConv eParams
             let res = m.Invoke(onObj, iParams)
             fromFSharp res
             
+    let lispifyFSharpFunction (fn : obj) : LispifiedMethod=
+        let invoker =
+            fn.GetType().GetRuntimeMethods()
+            |> Seq.find (fun m -> m.Name = "Invoke")
+        let fParams = invoker.GetParameters() |> Seq.map (fun p -> p.ParameterType)
+        fun (_ : obj) (e : SExpr list) ->
+            let iParams = makeSExprToDotnetParamsConverter fParams e
+            let res = invoker.Invoke(fn, iParams)
+            fromFSharp res
+
 
 [<AutoOpen>]
 module Convert =
@@ -304,6 +326,8 @@ module Convert =
 
 
 module Env =
+    open Microsoft.FSharp.Quotations
+
     type Env = {
         functions : Map<string, Lispify.LispifiedMethod>
     } with
@@ -353,6 +377,26 @@ module Env =
             |> Option.defaultWith (fun () -> $"{m.DeclaringType.FullName}.{m.Name}".Replace('.', '/'))
         (fq, methodToLispifiedMethod m)
         
+    let rec toLispifiedFromQuotation (q : Expr) : (string * Lispify.LispifiedMethod) =
+        match q with
+        | Patterns.Call(None, expr, _) ->
+          toLispified expr
+        | Patterns.Lambda(_, expr) ->
+          toLispifiedFromQuotation expr
+        | x ->
+          failwithf $"Not a function call: %A{x}"
+
+    let withFunction (name : string) (lispified : Lispify.LispifiedMethod) (env : Env) : Env =
+      { env with functions = Map.add name lispified env.functions }
+
+    let withFunctionFromQuoted (q : Expr) (env : Env) : Env =
+      toLispifiedFromQuotation q
+      |> fun (n, l) -> withFunction n l env
+
+    let withFunctionFromMethodInfo (m : MethodInfo) (env : Env) : Env =
+      toLispified m
+      |> fun (n, l) -> withFunction n l env
+
     let withExposedFunctionsFromAssemblies (asms : Assembly seq) : Env =
         let functions =
             asms
