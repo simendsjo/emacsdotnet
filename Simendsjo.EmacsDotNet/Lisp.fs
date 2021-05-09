@@ -118,14 +118,9 @@ module CaseConvert =
 
 
 module Parser =
-    let parseNil =
-        pstring "nil"
-        |>> fun _ -> Nil
-        .>> spaces
-        
     let parseSymbol =
         many1Chars (anyOf "+-*/_~!@$%^&=:<>{}" <|> letter <|> digit)
-        |>> Symbol
+        |>> fun s -> if s = "nil" then Nil else Symbol s
         .>> spaces
         
     let numberFormat =
@@ -156,7 +151,6 @@ module Parser =
             parseNumber
             parseCharacter
             parseString
-            parseNil
             parseSymbol
         ]
         
