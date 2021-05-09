@@ -58,6 +58,12 @@ let evalTests =
       Expect.equal (evalSingle "t") (SExpr.Symbol "t") "True is t"
     testCase "eval keyword returns keyword" <| fun _ ->
       Expect.equal (evalSingle ":anything") (SExpr.Symbol ":anything") "Keywords are self-evaluating"
+    testCase "eval function without parameters without nil argument" <| fun _ ->
+      let env = { Env.Env.Empty with functions = Map.add "some-function" (fun _ sexpr -> SExpr.String "ok") Map.empty }
+      Expect.equal (Eval.evalOrFail env "(some-function)") ([ SExpr.String "ok" ]) "called without argument"
+    testCase "eval function without parameters with nil argument" <| fun _ ->
+      let env = { Env.Env.Empty with functions = Map.add "some-function" (fun _ sexpr -> SExpr.String "ok") Map.empty }
+      Expect.equal (Eval.evalOrFail env "(some-function nil)") ([ SExpr.String "ok" ]) "called with nil argument"
   ]
 
 [<Tests>]
@@ -95,4 +101,73 @@ let sexprToFSharpValues =
       Expect.equal (sexprToFSharp (SExpr.Symbol "t")) (true :> obj) (nameof int)
       Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1])) ([1] :> obj) "hetrogen list"
       Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1; SExpr.Float 1.0])) ([1 :> obj; 1.0 :> obj] :> obj) "homogen list"
+    testCase "nil -> bool" <| fun _ ->
+      let actual = Lispify.sexprToFSharp SExpr.Nil typeof<bool> :?> bool
+      Expect.equal actual false "nil should evaluate to bool"
+    testCase "nil -> empty list" <| fun _ ->
+      let actual = Lispify.sexprToFSharp SExpr.Nil typeof<obj list> :?> obj list
+      Expect.equal actual List.empty<obj> "nil should evaluate to bool"
   ]
+
+module ExposedFunctionTests =
+  [<ExposeToEmacsAsTopLevelKebabCase>]
+  let nilToNil () = ()
+
+  [<ExposeToEmacsAsTopLevelKebabCase>]
+  let manyParameters
+    (c : char)
+    (b : bool)
+    (i : int)
+    (f : float)
+    (s : string)
+    (cs : char list)
+    (bs : bool list)
+    (is : int list)
+    (fs : float list)
+    (ss : string list)
+    : obj list
+    =
+      [
+        c :> obj
+        b :> obj
+        i :> obj
+        f :> obj
+        s :> obj
+        cs :> obj
+        bs :> obj
+        is :> obj
+        fs :> obj
+        ss :> obj
+      ]
+
+
+  [<Tests>]
+  let tests =
+    testList "function call tests" [
+      testCase "nil to nil" <| fun _ ->
+        let env = Env.withFunctionFromQuoted <@ nilToNil @> (Env.Env.Empty)
+        let actual = Eval.evalOrFail env "(nil-to-nil nil)"
+        Expect.equal actual [SExpr.Nil] "calling function"
+      testCase "nil as input can be called without parameters" <| fun _ ->
+        let env = Env.withFunctionFromQuoted <@ nilToNil @> (Env.Env.Empty)
+        let actual = Eval.evalOrFail env "(nil-to-nil)"
+        Expect.equal actual [SExpr.Nil] "calling function"
+      testCase "many parameters" <| fun _ ->
+        let expected = [
+          SExpr.List [
+            SExpr.Character 'c'
+            SExpr.Symbol "t"
+            SExpr.Integer 1
+            SExpr.Float 2.0
+            SExpr.String "s"
+            SExpr.List [ SExpr.Character 'd'; SExpr.Character 'e' ]
+            SExpr.List [ SExpr.Symbol "t"; SExpr.Nil ]
+            SExpr.List [ SExpr.Integer 1; SExpr.Integer 2 ]
+            SExpr.List [ SExpr.Float 3.0; SExpr.Float 4.0 ]
+            SExpr.List [ SExpr.String "o"; SExpr.String "k" ]
+          ]
+        ]
+        let env = Env.withFunctionFromQuoted <@ manyParameters @> (Env.Env.Empty)
+        let actual = Eval.evalOrFail env "(many-parameters ?c t 1 2.0 \"s\" (?d ?e) (t nil) (1 2) (3.0 4.0) (\"o\" \"k\"))"
+        Expect.equal actual expected "calling with many parameters"
+    ]
