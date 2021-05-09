@@ -213,6 +213,8 @@ module Delispify =
                     xs |> List.map (function | SExpr.Float x -> x | _ -> invalidOp "bug") :> obj
                 | (SExpr.Character _::_) ->
                     xs |> List.map (function | SExpr.Character x -> x | _ -> invalidOp "bug") :> obj
+                | (SExpr.Symbol _::_) ->
+                    xs |> List.map (function | SExpr.Symbol x -> x | _ -> invalidOp "bug") :> obj
                 | xs ->
                     xs |> List.map toFSharp :> obj
             else
