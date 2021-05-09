@@ -270,6 +270,26 @@ module Lispify =
         if dest = typeof<SExpr>
         then sexpr :> obj
         // Convert to the exact type. Cannot send int for int8 parameter
+        elif sexpr = SExpr.Nil then
+            if dest = typeof<bool> then false :> obj
+            elif dest = typeof<obj list> then List.empty<obj> :> obj
+            elif dest = typeof<char list> then List.empty<char> :> obj
+            elif dest = typeof<int list> then List.empty<int> :> obj
+            elif dest = typeof<float list> then List.empty<float> :> obj
+            elif dest = typeof<string list> then List.empty<string> :> obj
+            else failwithf $"Nil to empty list for list of type %A{dest} not supported!"
+        elif dest = typeof<bool list> then
+            let (SExpr.List bs) = sexpr
+            bs
+            |> Seq.fold (fun s e ->
+                match e with
+                | SExpr.Nil -> false :: s
+                | SExpr.Symbol "t" -> true :: s
+                | x -> failwithf $"Expression %A{x} cannot be converted to a boolean"
+            ) []
+            |> Seq.rev
+            |> List.ofSeq
+            :> obj
         else Convert.ChangeType(Delispify.toFSharp sexpr, dest)
 
     let sexprToTypedFSharp<'dest> (sexpr : SExpr) : 'dest =
