@@ -179,50 +179,96 @@ module Parser =
         
         
 module Delispify =
-    let rec toFSharp (e : SExpr) : obj =
+    let rec toFSharp (e : SExpr) (toType : Type) : obj =
+        let cannotConvert () =
+            failwithf $"Cannot convert %A{e} to {toType}"
+        let convOrFail (fromType : Type) (x : obj) =
+            if toType.IsAssignableFrom(fromType)
+            then Convert.ChangeType(x, toType)
+            else cannotConvert ()
         match e with
-        | SExpr.Nil -> () :> obj
-        | SExpr.Character x -> x :> obj
-        | SExpr.String x -> x :> obj
-        | SExpr.Integer x -> x :> obj
-        | SExpr.Float x -> x :> obj
-        | SExpr.Symbol x ->
-            if x = "t"
-            then true :> obj
-            else x :> obj
-        | SExpr.List xs ->
-            // Homogenous list should be ('a list) :> obj rather than (obj list) :> obj
-            let isHomogenous =
-                xs
-                |> Seq.map sexprTag
-                |> Seq.distinct
-                |> Seq.length
-                |> fun l -> l = 1
-            if isHomogenous then
-                // NOTE: The strange matching and invalidOp is to avoid
-                // a warning stating patterns not handled. We already know
-                // the list is homogenous, but the compiler doesn't. It's
-                // only possible to disable this warning for the entire
-                // file or project.
-                match xs with
-                | (SExpr.String _::_) ->
-                    xs |> List.map (function | SExpr.String x -> x | _ -> invalidOp "bug") :> obj
-                | (SExpr.Integer _::_) ->
-                    xs |> List.map (function | SExpr.Integer x -> x | _ -> invalidOp "bug") :> obj
-                | (SExpr.Float _::_) ->
-                    xs |> List.map (function | SExpr.Float x -> x | _ -> invalidOp "bug") :> obj
-                | (SExpr.Character _::_) ->
-                    xs |> List.map (function | SExpr.Character x -> x | _ -> invalidOp "bug") :> obj
-                | (SExpr.Symbol _::_) ->
-                    xs |> List.map (function | SExpr.Symbol x -> x | _ -> invalidOp "bug") :> obj
-                | xs ->
-                    xs |> List.map toFSharp :> obj
+        | _ when toType = typeof<SExpr> ->
+            e :> obj
+        | SExpr.Nil when toType = typeof<unit> ->
+            () :> obj
+        | SExpr.Nil when toType = typeof<Void> ->
+            // TODO: What is the correct value to use here?
+            () :> obj
+        | SExpr.Nil when toType = typeof<obj> ->
+            // TODO: Should we rather return null here?
+            () :> obj
+        | SExpr.Nil when toType.Name = "FSharpList`1" ->
+            // TODO: Support more collections
+            // TODO: Avoid hardcoding all possible permutations
+            let elemType = toType.GenericTypeArguments.[0]
+            if elemType = typeof<bool> then
+                List.empty<bool> :> obj
+            elif elemType = typeof<int> then
+                List.empty<int> :> obj
+            elif elemType = typeof<float> then
+                List.empty<float> :> obj
+            elif elemType = typeof<char> then
+                List.empty<char> :> obj
+            elif elemType = typeof<string> then
+                List.empty<string> :> obj
+            elif elemType = typeof<obj> then
+                List.empty<obj> :> obj
             else
+                cannotConvert ()
+        | SExpr.Nil when (not toType.IsValueType) ->
+            null :> obj
+        | SExpr.Nil when toType = typeof<bool> ->
+            false :> obj
+        | SExpr.Symbol "t" when toType = typeof<bool> || toType = typeof<obj> ->
+            true :> obj
+        | _ when toType = typeof<bool> ->
+            cannotConvert ()
+        | SExpr.Character x when toType = typeof<char> || toType = typeof<obj>->
+            x :> obj
+        | _ when toType = typeof<char> ->
+            cannotConvert ()
+        | SExpr.String x when toType = typeof<string>  || toType = typeof<obj> ->
+            x :> obj
+        | _ when toType = typeof<string> ->
+            cannotConvert ()
+        | SExpr.Integer x ->
+            convOrFail typeof<int> x
+        | SExpr.Float x ->
+            convOrFail typeof<float> x
+        | SExpr.Symbol s when toType = typeof<string> || toType = typeof<obj> ->
+            s :> obj
+        | SExpr.Symbol _ ->
+            cannotConvert ()
+        | SExpr.List xs ->
+            // FIXME: Support seq and other collections
+            if toType.Name = "FSharpList`1" then
+                let elemType = toType.GenericTypeArguments.[0]
                 xs
-                |> List.map toFSharp
-                :> obj
-                
-                
+                |> Seq.map (fun x -> toFSharp x elemType)
+                |> fun s ->
+                    // FIXME: Need to be able to cast to the correct type
+                    // without hardcoding all permutations
+                    if elemType = typeof<bool> then
+                        Convert.ChangeType(s |> Seq.cast<bool> |> List.ofSeq, toType)
+                    elif elemType = typeof<int> then
+                        Convert.ChangeType(s |> Seq.cast<int> |> List.ofSeq, toType)
+                    elif elemType = typeof<float> then
+                        Convert.ChangeType(s |> Seq.cast<float> |> List.ofSeq, toType)
+                    elif elemType = typeof<char> then
+                        Convert.ChangeType(s |> Seq.cast<char> |> List.ofSeq, toType)
+                    elif elemType = typeof<string> then
+                        Convert.ChangeType(s |> Seq.cast<string> |> List.ofSeq, toType)
+                    elif elemType = typeof<obj> then
+                        Convert.ChangeType(s |> Seq.cast<obj> |> List.ofSeq, toType)
+                    else
+                        cannotConvert ()
+            else
+                cannotConvert ()
+        | _ ->
+            cannotConvert ()
+
+
+
 module Lispify =
     type LispifiedMethod = obj -> SExpr list -> SExpr
     let rec fromFSharp (o : obj) : SExpr =
@@ -249,48 +295,25 @@ module Lispify =
         | :? float as x -> SExpr.Float (float x)
         | :? float32 as x -> SExpr.Float (float x)
         | :? decimal as x -> SExpr.Float (float x)
-        | :? List<char> as xs -> xs |> List.map SExpr.Character |> SExpr.List
-        | :? List<bool> as xs -> xs |> List.map (fun x -> if x then SExpr.Symbol "t" else SExpr.Nil) |> SExpr.List
-        | :? List<string> as xs -> xs |> List.map SExpr.String |> SExpr.List
-        | :? List<int8> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<int16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<int32> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<int64> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<uint8> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<uint16> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<uint32> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<uint64> as xs -> xs |> List.map (int >> SExpr.Integer) |> SExpr.List
-        | :? List<float> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
-        | :? List<float32> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
-        | :? List<decimal> as xs -> xs |> List.map (float >> SExpr.Float) |> SExpr.List
-        | :? List<obj> as xs -> xs |> List.map fromFSharp |> SExpr.List
+        | :? seq<char> as xs -> xs |> Seq.map SExpr.Character |> List.ofSeq |> SExpr.List
+        | :? seq<bool> as xs -> xs |> Seq.map (fun x -> if x then SExpr.Symbol "t" else SExpr.Nil) |> List.ofSeq |> SExpr.List
+        | :? seq<string> as xs -> xs |> Seq.map SExpr.String |> List.ofSeq |> SExpr.List
+        | :? seq<int8> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<int16> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<int32> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<int64> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<uint8> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<uint16> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<uint32> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<uint64> as xs -> xs |> Seq.map (int >> SExpr.Integer) |> List.ofSeq |> SExpr.List
+        | :? seq<float> as xs -> xs |> Seq.map (float >> SExpr.Float) |> List.ofSeq |> SExpr.List
+        | :? seq<float32> as xs -> xs |> Seq.map (float >> SExpr.Float) |> List.ofSeq |> SExpr.List
+        | :? seq<decimal> as xs -> xs |> Seq.map (float >> SExpr.Float) |> List.ofSeq |> SExpr.List
+        | :? seq<obj> as xs -> xs |> Seq.map fromFSharp |> List.ofSeq |> SExpr.List
         | x -> failwithf $"Unable to convert FSharp value %A{x} to an SExpr"
 
     let sexprToFSharp (sexpr : SExpr) (dest : Type) =
-        if dest = typeof<SExpr>
-        then sexpr :> obj
-        // Convert to the exact type. Cannot send int for int8 parameter
-        elif sexpr = SExpr.Nil then
-            if dest = typeof<bool> then false :> obj
-            elif dest = typeof<obj list> then List.empty<obj> :> obj
-            elif dest = typeof<char list> then List.empty<char> :> obj
-            elif dest = typeof<int list> then List.empty<int> :> obj
-            elif dest = typeof<float list> then List.empty<float> :> obj
-            elif dest = typeof<string list> then List.empty<string> :> obj
-            else failwithf $"Nil to empty list for list of type %A{dest} not supported!"
-        elif dest = typeof<bool list> then
-            let (SExpr.List bs) = sexpr
-            bs
-            |> Seq.fold (fun s e ->
-                match e with
-                | SExpr.Nil -> false :: s
-                | SExpr.Symbol "t" -> true :: s
-                | x -> failwithf $"Expression %A{x} cannot be converted to a boolean"
-            ) []
-            |> Seq.rev
-            |> List.ofSeq
-            :> obj
-        else Convert.ChangeType(Delispify.toFSharp sexpr, dest)
+        Delispify.toFSharp sexpr dest
 
     let sexprToTypedFSharp<'dest> (sexpr : SExpr) : 'dest =
         sexprToFSharp sexpr (typeof<'dest>) :?> 'dest
@@ -346,8 +369,8 @@ module Convert =
     let sexprToString (e : SExpr) : string =
         Printer.printExpr e
         
-    let sexprToFSharp (e : SExpr) : obj =
-        Delispify.toFSharp e
+    let sexprToFSharp (e : SExpr) (toType : Type) : obj =
+        Delispify.toFSharp e toType
         
     let fsharpToSExpr (o : obj) : SExpr =
         Lispify.fromFSharp o

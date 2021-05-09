@@ -93,14 +93,14 @@ let fsharpToSExprTests =
 let sexprToFSharpValues =
   testList "SExpr conversions to dotnet values" [
     testCase "simple values" <| fun _ ->
-      Expect.equal (sexprToFSharp (SExpr.Nil)) (() :> obj) (nameof unit)
-      Expect.equal (sexprToFSharp (SExpr.Character 'A')) ('A' :> obj) (nameof char)
-      Expect.equal (sexprToFSharp (SExpr.String "string")) ("string" :> obj) (nameof string)
-      Expect.equal (sexprToFSharp (SExpr.Integer 1)) (1 :> obj) (nameof int)
-      Expect.equal (sexprToFSharp (SExpr.Float 1.0)) (1.0 :> obj) (nameof int)
-      Expect.equal (sexprToFSharp (SExpr.Symbol "t")) (true :> obj) (nameof int)
-      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1])) ([1] :> obj) "hetrogen list"
-      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1; SExpr.Float 1.0])) ([1 :> obj; 1.0 :> obj] :> obj) "homogen list"
+      Expect.equal (sexprToFSharp (SExpr.Nil) typeof<obj>) (() :> obj) (nameof unit)
+      Expect.equal (sexprToFSharp (SExpr.Character 'A') typeof<obj>) ('A' :> obj) (nameof char)
+      Expect.equal (sexprToFSharp (SExpr.String "string") typeof<obj>) ("string" :> obj) (nameof string)
+      Expect.equal (sexprToFSharp (SExpr.Integer 1) typeof<obj>) (1 :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.Float 1.0) typeof<obj>) (1.0 :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.Symbol "t") typeof<obj>) (true :> obj) (nameof int)
+      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1]) typeof<int list>) ([1] :> obj) "hetrogen list"
+      Expect.equal (sexprToFSharp (SExpr.List [SExpr.Integer 1; SExpr.Float 1.0]) typeof<obj list>) ([1 :> obj; 1.0 :> obj] :> obj) "homogen list"
     testCase "nil -> bool" <| fun _ ->
       let actual = Lispify.sexprToFSharp SExpr.Nil typeof<bool> :?> bool
       Expect.equal actual false "nil should evaluate to bool"
